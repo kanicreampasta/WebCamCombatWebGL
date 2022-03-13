@@ -56,15 +56,23 @@ class SignalingServer {
     private onMessage(message: any) {
         console.log('received message:', message);
         if (message === 'got user media') {
-            
+            this.service.maybeStart();
         } else if (message.type === 'offer') {
-
+            if (!this.service.isStarted && !this.isMaster) {
+                this.service.maybeStart();
+            }
+            this.pc.setRemoteDescription(new RTCSessionDescription(message));
+            this.service.doAnswer();
         } else if (message.type === 'answer') {
-
+            this.pc.setRemoteDescription(new RTCSessionDescription(message));
         } else if (message.type === 'candidate') {
-
+            const candidate = new RTCIceCandidate({
+                sdpMLineIndex: message.label,
+                candidate: message.candidate
+            });
+            this.pc.addIceCandidate(candidate);
         } else if (message === 'bye') {
-
+            
         }
     }
 }
@@ -83,7 +91,7 @@ export class WebRTCService {
     private pc?: RTCPeerConnection;
     private signaling: SignalingServer;
 
-    private isStarted: boolean;
+    isStarted: boolean;
 
     constructor(localStream: MediaStream, remoteVideo: HTMLVideoElement) {
         this.localStream = localStream;
