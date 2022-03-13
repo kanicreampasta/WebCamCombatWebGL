@@ -74,7 +74,7 @@ class SignalingServer {
             });
             this.pc.addIceCandidate(candidate);
         } else if (message === 'bye') {
-            
+            this.service.stop();
         }
     }
 }
@@ -88,16 +88,18 @@ var sdpConstraints = {
 export class WebRTCService {
     // private localVideo: HTMLVideoElement;
     private localStream: MediaStream;
-    private remoteVideo: HTMLVideoElement;
+    // private remoteVideo: HTMLVideoElement;
 
     private pc?: RTCPeerConnection;
     private signaling: SignalingServer;
 
+    onRemoteAdded: (stream: MediaStream) => void;
+
     isStarted: boolean;
 
-    constructor(localStream: MediaStream, remoteVideo: HTMLVideoElement) {
+    constructor(localStream: MediaStream) {
         this.localStream = localStream;
-        this.remoteVideo = remoteVideo;
+        // this.remoteVideo = remoteVideo;
 
         this.signaling = new SignalingServer(this);
     }
@@ -139,7 +141,8 @@ export class WebRTCService {
 
     private handleRemoteStreamAdded(event: any) {
         console.log('remote stream added');
-        this.remoteVideo.srcObject = event.stream;
+        // this.remoteVideo.srcObject = event.stream;
+        this.onRemoteAdded(event.stream);
     }
     
     private handleRemoteStreamRemoved(event: any) {
@@ -173,7 +176,7 @@ export class WebRTCService {
         this.signaling.sendMessage('bye');
     }
 
-    private stop() {
+    stop() {
         this.isStarted = false;
         this.pc.close();
         this.pc = null;
