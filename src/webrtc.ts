@@ -13,10 +13,12 @@ class SignalingServer {
         });
         this.pc = null;
         const room = 'foo';
+        this.isMaster = true;
 
         this.socket.on('connect', () => {
-            this.socket.emit('create or join', room);
-            console.log('attempted to create or join room ' + room);
+            // this.socket.emit('create or join', room);
+            // console.log('attempted to create or join room ' + room);
+            console.log('connected');
         });
 
         this.socket.on('connect_error', (error: any) => {
@@ -25,27 +27,27 @@ class SignalingServer {
 
         this.socket.on('message', this.onMessage);
 
-        this.socket.on('created', (room: any) => {
-            console.log('created room ' + room);
-            this.isMaster = true;
-        });
+        // this.socket.on('created', (room: any) => {
+        //     console.log('created room ' + room);
+        //     this.isMaster = true;
+        // });
         
-        this.socket.on('full', (room: any) => {
-            console.log('room ' + room + ' is full');
-        });
+        // this.socket.on('full', (room: any) => {
+        //     console.log('room ' + room + ' is full');
+        // });
 
-        this.socket.on('join', (room: any) => {
-            console.log('another peer made a request to join room ' + room);
-            console.log('you are the master of room ' + room + '!');
-        });
+        // this.socket.on('join', (room: any) => {
+        //     console.log('another peer made a request to join room ' + room);
+        //     console.log('you are the master of room ' + room + '!');
+        // });
 
-        this.socket.on('joined', (room: any) => {
-            console.log('joined room ' + room);
-        });
+        // this.socket.on('joined', (room: any) => {
+        //     console.log('joined room ' + room);
+        // });
 
-        this.socket.on('log', (array: any) => {
-            console.log.apply(console, array);
-        });
+        // this.socket.on('log', (array: any) => {
+        //     console.log.apply(console, array);
+        // });
     }
 
     sendMessage(message: any) {
@@ -102,9 +104,9 @@ export class WebRTCService {
 
     createPeerConnection() {
         this.pc = new RTCPeerConnection(null);
-        this.pc.onicecandidate = this.handleIceCandidate;
-        (this.pc as any).onaddstream = this.handleRemoteStreamAdded;
-        (this.pc as any).onremovestream = this.handleRemoteStreamRemoved;
+        this.pc.onicecandidate = (c) => this.handleIceCandidate(c);
+        (this.pc as any).onaddstream = (s: any) => this.handleRemoteStreamAdded(s);
+        (this.pc as any).onremovestream = (s: any) => this.handleRemoteStreamRemoved(s);
 
         this.signaling.pc = this.pc;
     }
@@ -147,7 +149,7 @@ export class WebRTCService {
     makeCall() {
         console.log('sending offer to peer');
         this.pc.createOffer()
-            .then(this.setLocalAndSendMessage)
+            .then((desc) => this.setLocalAndSendMessage(desc))
             .catch((error) => {
                 console.log('failed to create offer:', error);
             });
@@ -156,7 +158,7 @@ export class WebRTCService {
     doAnswer() {
         console.log('sending answer to peer');
         this.pc.createAnswer()
-            .then(this.setLocalAndSendMessage)
+            .then((desc) => this.setLocalAndSendMessage(desc))
             .catch((error) => {
                 console.log('failed to create answer:', error);
             });

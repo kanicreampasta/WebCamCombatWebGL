@@ -55,6 +55,7 @@ class PlayerObject {
 const video = document.querySelector('#video') as HTMLVideoElement;
 const remoteVideo = document.createElement('video');
 remoteVideo.autoplay = true;
+let rtc;
 
 let localStream: MediaStream;
 // request camera access
@@ -69,6 +70,9 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         localStream = stream;
         video.srcObject = stream;
         video.play();
+
+        rtc = new WebRTCService(localStream, remoteVideo);
+        rtc.maybeStart();
 
     }).catch(function (error) {
 
@@ -103,8 +107,6 @@ const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setAnimationLoop(animation);
 document.body.appendChild(renderer.domElement);
-
-const rtc = new WebRTCService(localStream, remoteVideo);
 
 // renderer.domElement.addEventListener('keydown', (ev) => {
 //     console.log(ev);
