@@ -26,6 +26,29 @@ function createPlayerFace(video: HTMLVideoElement): THREE.Mesh {
     return mesh;
 }
 
+class PlayerObject {
+    private body: THREE.Mesh;
+    private face: THREE.Mesh;
+
+    constructor(body: THREE.Mesh, face: THREE.Mesh) {
+        this.body = body;
+        this.face = face;
+    }
+
+    addToScene(scene: THREE.Scene) {
+        scene.add(this.body);
+        scene.add(this.face);
+    }
+
+    moveTo(x: number, y: number) {
+        this.body.position.x = x;
+        this.body.position.y = y;
+        this.face.position.x = x;
+        this.face.position.y = y;
+        this.face.position.y -= 0.4;
+    }
+}
+
 // init
 
 const video = document.querySelector('#video') as HTMLVideoElement;
@@ -64,11 +87,9 @@ camera.lookAt(new THREE.Vector3(0, 0, 0));
 const scene = new THREE.Scene();
 
 const floor = createFloor();
-const player = createPlayerObject();
-const face = createPlayerFace(video);
+const player = new PlayerObject(createPlayerObject(), createPlayerFace(video));
 scene.add(floor);
-scene.add(player);
-scene.add(face);
+player.addToScene(scene);
 floor.position.z = -1;
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -76,29 +97,20 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setAnimationLoop(animation);
 document.body.appendChild(renderer.domElement);
 
-function movePlayer(x: number, y: number) {
-    console.log('move')
-    player.position.x = x;
-    player.position.y = y;
-    face.position.x = x;
-    face.position.y = y;
-    face.position.y -= 0.4;
-}
-
-renderer.domElement.addEventListener('keydown', (ev) => {
-    console.log(ev);
-    switch (ev.key) {
-        case 'w':
-            movePlayer(0, 0.1);
-            break;
-    }
-});
+// renderer.domElement.addEventListener('keydown', (ev) => {
+//     console.log(ev);
+//     switch (ev.key) {
+//         case 'w':
+//             movePlayer(0, 0.1);
+//             break;
+//     }
+// });
 
 // animation
 
 function animation(time: number) {
 
-    movePlayer(Math.cos(time/5000), Math.sin(time/3000)+0.1);
+    player.moveTo(Math.cos(time/5000), Math.sin(time/3000)+0.1);
 
     renderer.render(scene, camera);
 
