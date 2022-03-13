@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { MeshPhysicalMaterial } from 'three';
+import { WebRTCService } from './webrtc';
 
 function createFloor(): THREE.Mesh {
     const geometry = new THREE.BoxGeometry(5, 5, 0.1);
@@ -52,7 +53,10 @@ class PlayerObject {
 // init
 
 const video = document.querySelector('#video') as HTMLVideoElement;
+const remoteVideo = document.createElement('video');
+remoteVideo.autoplay = true;
 
+let localStream: MediaStream;
 // request camera access
 if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 
@@ -62,6 +66,7 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 
         // apply the stream to the video element used in the texture
 
+        localStream = stream;
         video.srcObject = stream;
         video.play();
 
@@ -88,14 +93,18 @@ const scene = new THREE.Scene();
 
 const floor = createFloor();
 const player = new PlayerObject(createPlayerObject(), createPlayerFace(video));
+const player2 = new PlayerObject(createPlayerObject(), createPlayerFace(remoteVideo));
 scene.add(floor);
 player.addToScene(scene);
+player2.addToScene(scene);
 floor.position.z = -1;
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setAnimationLoop(animation);
 document.body.appendChild(renderer.domElement);
+
+const rtc = new WebRTCService(localStream, remoteVideo);
 
 // renderer.domElement.addEventListener('keydown', (ev) => {
 //     console.log(ev);
@@ -110,7 +119,8 @@ document.body.appendChild(renderer.domElement);
 
 function animation(time: number) {
 
-    player.moveTo(Math.cos(time/5000), Math.sin(time/3000)+0.1);
+    player.moveTo(Math.cos(time/5000), Math.sin(time/3000)+0.1+0.2);
+    player2.moveTo(-Math.cos(time/5000), -Math.sin(time/3000)-0.1+0.2);
 
     renderer.render(scene, camera);
 
