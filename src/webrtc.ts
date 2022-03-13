@@ -25,7 +25,7 @@ class SignalingServer {
             console.log('connect error', error);
         });
 
-        this.socket.on('message', this.onMessage);
+        this.socket.on('message', (msg: any) => this.onMessage(msg));
 
         // this.socket.on('created', (room: any) => {
         //     console.log('created room ' + room);
