@@ -1,4 +1,4 @@
-const io = require('socket.io-client');
+// const io = require('socket.io-client');
 
 class SignalingServer {
     private socket: any;
@@ -8,74 +8,25 @@ class SignalingServer {
 
     constructor(service: WebRTCService) {
         this.service = service;
-        this.socket = io('localhost:8000', {
-            rejectUnauthorized: false
-        });
-        this.pc = null;
-        const room = 'foo';
         this.isMaster = true;
-
-        this.socket.on('connect', () => {
-            // this.socket.emit('create or join', room);
-            // console.log('attempted to create or join room ' + room);
-            console.log('connected');
-        });
-
-        this.socket.on('connect_error', (error: any) => {
-            console.log('connect error', error);
-        });
-
-        this.socket.on('message', (msg: any) => this.onMessage(msg));
-
-        // this.socket.on('created', (room: any) => {
-        //     console.log('created room ' + room);
-        //     this.isMaster = true;
-        // });
-        
-        // this.socket.on('full', (room: any) => {
-        //     console.log('room ' + room + ' is full');
-        // });
-
-        // this.socket.on('join', (room: any) => {
-        //     console.log('another peer made a request to join room ' + room);
-        //     console.log('you are the master of room ' + room + '!');
-        // });
-
-        // this.socket.on('joined', (room: any) => {
-        //     console.log('joined room ' + room);
-        // });
-
-        // this.socket.on('log', (array: any) => {
-        //     console.log.apply(console, array);
-        // });
     }
 
     sendMessage(message: any) {
         console.log("sending message to signaling server:", message);
-        this.socket.emit('message', message);
-    }
-
-    private onMessage(message: any) {
-        console.log('received message:', message);
-        if (message === 'got user media') {
-            this.service.maybeStart();
-        } else if (message.type === 'offer') {
-            if (!this.service.isStarted && !this.isMaster) {
-                this.service.maybeStart();
+        fetch('http://localhost:8080/offer', {
+            method: 'POST',
+            body: JSON.stringify(message),
+            headers: {
+                'Content-Type': 'application/json'
             }
-            this.pc.setRemoteDescription(new RTCSessionDescription(message));
-            this.service.doAnswer();
-        } else if (message.type === 'answer') {
-            this.pc.setRemoteDescription(new RTCSessionDescription(message));
-        } else if (message.type === 'candidate') {
-            const candidate = new RTCIceCandidate({
-                sdpMLineIndex: message.label,
-                candidate: message.candidate
-            });
-            this.pc.addIceCandidate(candidate);
-        } else if (message === 'bye') {
-            this.service.stop();
-        }
+        })
+        .then(res => res.json())
+        .then(answer => {
+            this.pc.setRemoteDescription(answer);
+        })
+        .catch(e => {
+            console.warn(e);
+        });
     }
 }
 
@@ -128,12 +79,12 @@ export class WebRTCService {
     private handleIceCandidate(event: RTCPeerConnectionIceEvent) {
         console.log('icecandidate event:', event);
         if (event.candidate) {
-            this.signaling.sendMessage({
-                type: 'candidate',
-                label: event.candidate.sdpMLineIndex,
-                id: event.candidate.sdpMid,
-                candidate: event.candidate.candidate
-            });
+            // this.signaling.sendMessage({
+            //     type: 'candidate',
+            //     label: event.candidate.sdpMLineIndex,
+            //     id: event.candidate.sdpMid,
+            //     candidate: event.candidate.candidate
+            // });
         } else {
             console.log('End of candidates');
         }
@@ -169,7 +120,10 @@ export class WebRTCService {
 
     private setLocalAndSendMessage(sessionDescription: RTCSessionDescriptionInit) {
         this.pc.setLocalDescription(sessionDescription);
-        this.signaling.sendMessage(sessionDescription);
+        this.signaling.sendMessage({
+            sdp: sessionDescription.sdp,
+            type: sessionDescription.type
+        });
     }
 
     bye() {
