@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { MeshPhysicalMaterial } from 'three';
 import { WebRTCService } from './webrtc';
+import * as v from './video';
 
 function createFloor(): THREE.Mesh {
     const geometry = new THREE.BoxGeometry(5, 5, 0.1);
@@ -76,6 +77,7 @@ renderer.setAnimationLoop(animation);
 document.body.appendChild(renderer.domElement);
 
 // request camera access
+/*
 let rtc;
 let localStream: MediaStream;
 let remoteIdx = 1;
@@ -102,6 +104,14 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
 } else {
     console.error('MediaDevices interface not available.');
 }
+*/
+
+const localVideo = document.querySelector('#localVideo') as HTMLVideoElement;
+const remoteVideo = document.querySelector('#remoteVideo') as HTMLVideoElement;
+v.videoTags.push(localVideo);
+v.videoTags.push(remoteVideo);
+
+v.initAndStart();
 
 // animation
 
