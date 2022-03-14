@@ -27,6 +27,7 @@ class SignalingServer {
         })
         .then(res => res.json())
         .then(answer => {
+            console.log('setting remote description');
             this.pc.setRemoteDescription(answer);
         })
         .catch(e => {
@@ -35,6 +36,7 @@ class SignalingServer {
     }
 
     sendCandidate(candidate: RTCIceCandidate) {
+        return;
         console.log('sending candidate to signaling server');
         fetch('http://localhost:8001/candidate', {
             method: 'POST',
@@ -137,7 +139,29 @@ export class WebRTCService {
     makeCall() {
         console.log('sending offer to peer');
         this.pc.createOffer()
-            .then((desc) => this.setLocalAndSendMessage(desc))
+            .then((desc) => {
+                return new Promise<RTCSessionDescriptionInit>((resolve) => {
+                    this.pc.setLocalDescription(desc).then(() => resolve(desc));
+                });
+            })
+            .then((desc) => {
+                // When communicating with aiortc, we need to wait for ICE gathering to complete
+                return new Promise<RTCSessionDescriptionInit>((resolve) => {
+                    if (this.pc.iceGatheringState === 'complete') {
+                        resolve(desc);
+                    } else {
+                        const checkState = () => {
+                            console.log(this.pc.iceGatheringState);
+                            if (this.pc.iceGatheringState === 'complete') {
+                                this.pc.removeEventListener('icegatheringstatechange', checkState);
+                                resolve(desc);
+                            }
+                        };
+                        this.pc.addEventListener('icegatheringstatechange', checkState);
+                    }
+                });
+            })
+            .then((desc) => this.sendLocalDescription(desc))
             .catch((error) => {
                 console.log('failed to create offer:', error);
             });
@@ -154,6 +178,10 @@ export class WebRTCService {
 
     private setLocalAndSendMessage(sessionDescription: RTCSessionDescriptionInit) {
         this.pc.setLocalDescription(sessionDescription);
+        this.sendLocalDescription(sessionDescription);
+    }
+
+    private sendLocalDescription(sessionDescription: RTCSessionDescriptionInit) {
         this.signaling.sendMessage({
             sdp: sessionDescription.sdp,
             type: sessionDescription.type
