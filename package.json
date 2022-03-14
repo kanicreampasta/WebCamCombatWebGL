@@ -15,6 +15,7 @@
   "license": "MIT",
   "devDependencies": {
     "@types/three": "^0.138.0",
+    "@types/uuid": "^8.3.4",
     "@webpack-cli/generators": "^2.4.2",
     "html-webpack-plugin": "^5.5.0",
     "prettier": "^2.5.1",
@@ -26,6 +27,7 @@
   },
   "dependencies": {
     "socket.io-client": "^4.4.1",
-    "three": "^0.138.3"
+    "three": "^0.138.3",
+    "uuid": "^8.3.2"
   }
 }

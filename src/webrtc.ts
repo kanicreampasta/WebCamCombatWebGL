@@ -1,21 +1,26 @@
 // const io = require('socket.io-client');
+import { v4 as uuidv4 } from 'uuid';
 
 class SignalingServer {
     private socket: any;
     pc: RTCPeerConnection;
     isMaster: boolean;
     private service: WebRTCService;
+    clientId: string;
 
     constructor(service: WebRTCService) {
         this.service = service;
         this.isMaster = true;
+        this.clientId = uuidv4();
     }
 
     sendMessage(message: any) {
         console.log("sending message to signaling server:", message);
-        fetch('http://localhost:8080/offer', {
+        const body = Object.assign({}, message);
+        body['clientId'] = this.clientId;
+        fetch('http://localhost:8001/offer', {
             method: 'POST',
-            body: JSON.stringify(message),
+            body: JSON.stringify(body),
             headers: {
                 'Content-Type': 'application/json'
             }
@@ -23,6 +28,34 @@ class SignalingServer {
         .then(res => res.json())
         .then(answer => {
             this.pc.setRemoteDescription(answer);
+        })
+        .catch(e => {
+            console.warn(e);
+        });
+    }
+
+    sendCandidate(candidate: RTCIceCandidate) {
+        console.log('sending candidate to signaling server');
+        fetch('http://localhost:8001/candidate', {
+            method: 'POST',
+            body: JSON.stringify({
+                type: 'candidate',
+                clientId: this.clientId,
+                label: candidate.sdpMLineIndex,
+                id: candidate.sdpMid,
+                candidate: {
+                    component: candidate.component,
+                    foundation: candidate.foundation,
+                    ip: candidate.address,
+                    port: candidate.port,
+                    priority: candidate.priority,
+                    protocol: candidate.protocol,
+                    type: candidate.type
+                }
+            }),
+            headers: {
+                'Content-Type': 'application/json'
+            }
         })
         .catch(e => {
             console.warn(e);
@@ -85,6 +118,7 @@ export class WebRTCService {
             //     id: event.candidate.sdpMid,
             //     candidate: event.candidate.candidate
             // });
+            this.signaling.sendCandidate(event.candidate);
         } else {
             console.log('End of candidates');
         }
