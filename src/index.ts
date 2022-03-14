@@ -64,12 +64,19 @@ camera.lookAt(new THREE.Vector3(0, 0, 0));
 
 const scene = new THREE.Scene();
 
+const localVideo = document.querySelector('#localVideo') as HTMLVideoElement;
+const remoteVideo = document.querySelector('#remoteVideo') as HTMLVideoElement;
+v.videoTags.push(localVideo);
+v.videoTags.push(remoteVideo);
+
 const floor = createFloor();
-const player = new PlayerObject(createPlayerObject(), createPlayerFace(video));
+const player = new PlayerObject(createPlayerObject(), createPlayerFace(localVideo));
+const player2 = new PlayerObject(createPlayerObject(), createPlayerFace(remoteVideo));
 scene.add(floor);
 player.addToScene(scene);
+player2.addToScene(scene);
 floor.position.z = -1;
-const players = [player];
+const players = [player, player2];
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -105,11 +112,6 @@ if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     console.error('MediaDevices interface not available.');
 }
 */
-
-const localVideo = document.querySelector('#localVideo') as HTMLVideoElement;
-const remoteVideo = document.querySelector('#remoteVideo') as HTMLVideoElement;
-v.videoTags.push(localVideo);
-v.videoTags.push(remoteVideo);
 
 v.initAndStart();
 

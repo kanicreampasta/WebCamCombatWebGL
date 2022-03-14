@@ -325,7 +325,7 @@ function newRemoteFeed(janus: Janus, id: string, display: string, streams0: any[
             }
         },
         onlocaltrack: function(track: any, on: any) {
-            // unexpected
+            // not expected
         },
         onremotetrack: function(track: any, mid: any, on: boolean) {
             console.log(`remote feed ${remoteFeed.rfindex}, remote track (mid=${mid}) added=${on}`);
@@ -333,7 +333,7 @@ function newRemoteFeed(janus: Janus, id: string, display: string, streams0: any[
                 // track removed, get rid of the stream
                 const stream = remoteFeed.remoteTracks[mid];
                 if (stream) {
-                    videoTags[1].srcObject = stream;
+                    // TODO
                 }
                 return;
             }
@@ -347,6 +347,8 @@ function newRemoteFeed(janus: Janus, id: string, display: string, streams0: any[
                 remoteFeed.remoteTracks[mid] = stream;
                 console.log("created remote video stream:", stream);
                 // attach stream
+                videoTags[1].srcObject = stream;
+                videoTags[1].play();
             }
         },
         oncleanup: function() {
